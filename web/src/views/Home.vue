@@ -2,8 +2,6 @@
   <div class="home">
     <Header/>
     <Search/>
-    <hr>
-    <Information/>
     <Footer/>
   </div>
 </template>
@@ -12,7 +10,6 @@
 // @ is an alias to /src
 import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
-import Information from '@/components/Information.vue'
 import Search from '@/components/Search.vue'
 
 export default {
@@ -20,7 +17,6 @@ export default {
   components: {
     Header,
     Footer,
-    Information,
     Search
   }
 }
