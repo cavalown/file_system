@@ -1,29 +1,28 @@
-"use strict";
-import Koa from "koa";
-import Router from "koa-router";
-import KoaBody from "koa-body";
-import fse from "fs-extra";
-import path from "path";
-import config from "../config/index.js";
-import { dir } from "console";
+"use strict"
+import Koa from "koa"
+import Router from "koa-router"
+import KoaBody from "koa-body"
+import fse from "fs-extra"
+import path from "path"
+import config from "../config/index.js"
+import fileSend from "koa-send"
+
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
-// import fileLib from "../lib/fileLib/index.js";
 
 const app = new Koa();
 const router = new Router({ prefix: "/api" });
 
 app.use(KoaBody());
 
-// const dirPath = path.resolve(__dirname, config.koaApi.storage.filespace);
-// const recordFile = path.resolve(__dirname, config.koaApi.storage.recordpath);
-const dirPath = "../../public";
-const recordFile = "../config/files_record.txt";
+const dirPath = path.resolve(__dirname, config.koaApi.storage.filespace);
+const recordFile = path.resolve(__dirname, config.koaApi.storage.recordpath);
+// console.log(dirPath);
+// console.log(recordFile)
 
 app.use(
   KoaBody({
     multipart: true,
     urlencoded: true,
-    // formLimit: "100mb",
     formidable: {
       keepExtensions: true,
       uploadDir: path.resolve(dirPath),
@@ -34,16 +33,13 @@ app.use(
 
 // Check Server
 router.get("/", async (ctx) => {
-  ctx.body = "Server on";
+  ctx.body = {"Content": "Server on"};
+  console.log("content: server on")
 });
 
 // Get all files
 router.get("/files", async (ctx) => {
   try {
-    // let fileList = await fse.readdir(dirPath);
-    // console.log("All files:", fileList);
-    // ctx.body = fileList;
-    // console.log(recordFile);
     let fileAll = await fse.readFile(recordFile, "utf-8");
     console.log("All Files:", fileAll);
     ctx.body = fileAll;
@@ -83,46 +79,22 @@ router.delete("/files/Delete/fileName=:fileName", async (ctx) => {
   let fileName = ctx.params.fileName;
   console.log("filename:", fileName);
   let fileInfoRecords = (await fse.readFile(recordFile, "utf-8")).split("\n");
-  let fileList = await fse.readdir(dirPath);
-  let removeFileIndex = [];
+  let data = fileInfoRecords;
   try{
     fileInfoRecords.map((item, index, data)=>{
       if (item.includes(fileName)){
-        console.log(item);
         const newFileName = item.split("||").slice(0, 1).join();
         fse.remove(path.resolve(dirPath, newFileName));
         console.log(`File: ${fileName} deleted!`);
         ctx.body = `File: ${fileName} deleted!`;
+        data.splice(index);
+        console.log(data);
       }
     })
-    let data = (await fse.readFile(recordFile, 'utf-8')).split('\n');
-    for(index in removeFileIndex.reverse){
-      data.splice(index);
-    }
-    fse.outputFile(recordFile, data, {
+    fse.outputFile(recordFile, data.join('\n'), {
       flags: "w",
     });
   }catch(err){console.log(err);}
-  // try {
-  //   fileInfoRecords.forEach((item) => {
-  //     if (item.includes(fileName)) {
-  //       const newFileName = item.split("||").slice(0, 1).join();
-  //       console.log("Find:", newFileName);
-  //       fileList.forEach((element) => {
-  //         if (element.includes(newFileName)) {
-  //           fse.remove(path.resolve(dirPath, newFileName));
-  //           console.log(`File: ${fileName} deleted!`);
-  //           ctx.body = `File: ${fileName} deleted!`;
-  //         }
-  //       });
-  //     } else {
-  //       console.log(`File: ${fileName} not found.`);
-  //     }
-  //   });
-  // } catch (err) {
-  //   console.log(err);
-  //   ctx.status = 400;
-  // }
 });
 
 
@@ -132,18 +104,19 @@ router.get("/files/Download/fileName=:fileName", async (ctx) => {
   let fileInfoRecords = (await fse.readFile(recordFile, "utf-8")).split("\n");
   try {
     fileInfoRecords.forEach((item) => {
-      if (item.includes(fileName)) {
-        const newFileName = item.split("||").slice(0, 1);
-        filePath = path.resolve(dirPath, newFileName);
+      if (item.split('||').slice(1,2).join() === fileName) {
+        const newFileName = item.split("||").slice(0, 1).join();
+        const filePath = path.resolve(dirPath, newFileName);
+        console.log("filePath:", filePath);
         if (fse.existsSync(filePath)) {
           ctx.attachment(filePath);
-          fileSend(ctx, dirPath + filePath);
+          fileSend(ctx, newFileName, {root:dirPath});
+          console.log('Download file done.');
         } else {
           ctx.throw(400, "File not found");
         }
       }
-    });
-  } catch (error) {
+  })} catch (error) {
     ctx.throw(500, error);
   }
 });
@@ -155,12 +128,13 @@ router.get("/files/Search/fileKeyword=:fileKeyword", async (ctx) => {
   let fileInfoRecords = (await fse.readFile(recordFile, "utf-8")).split("\n");
   let fileResult = [];
   try {
-    await fileInfoRecords.foreach((item) => {
+    fileInfoRecords.forEach((item) => {
       if (item.includes(fileKeyword)) {
-        fileResult.push(item.split("||").slice(1, 2));
+        fileResult.push(item.split("||").slice(1, 2).join());
       }
     });
     console.log(fileResult);
+    ctx.body = fileResult;
   } catch (err) {
     console.log(err);
   }

@@ -1,8 +1,11 @@
 'use strict'
 import dotenv from 'dotenv'
-import _ from 'lodash'
+import path from 'path'
+// import _ from 'lodash'
 
-dotenv.config()
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+dotenv.config({path: path.resolve(__dirname, '.env')})
+// dotenv.config({path: '../../.env'})
 
 
 const config = {
@@ -18,8 +21,8 @@ const config = {
             level: process.env.LOG_LEVEL
         },
         storage: {
-            filespace: '/public',
-            recordpath: '/src/config/files_record.txt'
+            filespace: '../public',
+            recordpath: '../config/files_record.txt'
         }
     }
 }
