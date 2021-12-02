@@ -1,7 +1,4 @@
 'use strict'
-import dotenv from 'dotenv'
-
-dotenv.config()
 
 const config = {
   fileSystem: {
@@ -10,6 +7,8 @@ const config = {
       host: process.env.VUE_HOST,
       port: Number.parseInt(process.env.VUE_PORT)
     },
+    // backEndS:{},
+    // protocol:{},
     api: {
       getAllFile: `${process.env.API_HOST}:${process.env.API_PORT}/api/files`,
       searchFile: `${process.env.API_HOST}:${process.env.API_PORT}/api/files/Search/fileKeyword=`,
@@ -20,5 +19,7 @@ const config = {
     }
   }
 }
+
+console.log(config)
 
 export default config

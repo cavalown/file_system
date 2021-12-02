@@ -11,33 +11,52 @@
     </form>
     <form class="upload-file">
       <div class="upload-group">
-        <label for="file-for-upload" class="file-for-upload">上傳檔案</label>
-        <input type="file" class="file-for-upload" id="file-for-upload" />
+        <label for="file-upload" class="file-for-upload"
+          >上傳檔案
+          <input type="file" class="file-for-upload" id="file-upload" />
+        </label>
       </div>
       <button @click="uploadFile" class="btn-upload-file">上傳</button>
     </form>
   </div>
   <hr />
   <div class="information">
-    <div class="forUpload" :disabled="isUpload"></div>
+    <div class="forUpload">
+      {{ uploadInformation }}
+    </div>
     <div class="forSearch" :disabled="isSearch">
+      {{ fileResult }}
+      <thead :disabled="isSearch">
+        <tr>
+          <th scope="col" class="col1">#</th>
+          <th scope="col" class="col2">檔名</th>
+          <th scope="col" class="col3">上傳時間</th>
+          <th scope="col" class="col4">下載</th>
+          <th scope="col" class="col5">刪除</th>
+        </tr>
+      </thead>
       <tbody>
         <tr v-for="(item, key) in fileResult" :key="key">
-          <td>{{ item.key }}</td>
-          <td>{{ item.split('||').slice(1, 2).join() }}</td>
-          <td>{{ item.split('||').slice(2, 3).join() }}</td>
-          <td>{{ item.split('||').slice(3, 4).join() }}</td>
+          <td>{{ key + 1 }}</td>
+          <td>{{ item.split('||').slice(1,2).join() }}</td>
+          <td>{{ item.split('||').slice(3).join() }}</td>
           <td>
             <button
-              @click="downloadFile(item.split('||').slice(0, 1).join())"
+              @click="downloadFile(item.split('||').slice(1,2).join())"
               type="button"
               class="btn-download-file"
             >
-              下載檔案
+              下載
             </button>
           </td>
           <td>
-            <a @click="downloadFile(item.split('||').slice(0, 1).join()) download></a>
+            <button
+              @click="deleteFile(item.split('||').slice(1,2).join())"
+              type="button"
+              class="btn-delete-file"
+            >
+              刪除
+            </button>
           </td>
         </tr>
       </tbody>
@@ -46,36 +65,46 @@
 </template>
 <script>
 import axios from 'axios'
-import config from '../router/config.js'
+// import config from '../router/config.js'
+axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*'
 
 export default {
   name: 'Search',
   data () {
     return {
       fileKeyword: '',
-      fileResult: ['aaa.txt||AAA||2021-03-11||txt', 'bbb.md||BBB||2020-11-09||md'],
+      fileResult: [],
       fileName: [],
       isSearch: 0,
-      isUpload: 0
+      fileInformation: ''
     }
   },
   methods: {
     async searchFile () {
       try {
         this.isSearch = 1
-        this.isUpload = 0
-        const res = await axios.get(
-          config.fileSystem.api.searchFile + this.fileKeyword
+        const searchRes = await axios.get(
+          'http://localhost:3000/api/files/Search/fileKeyword=' +
+            this.fileKeyword
         )
-        this.fileResult = res.data
-        console.log('Find Result:', this.fileResult)
+        this.fileResult = searchRes.data
+        console.log(searchRes)
       } catch (err) {
         console.log(err)
       }
     },
     async uploadFile () {
       try {
-        axios.post(config.fileSystem.api.uploadFile)
+        this.isUpload = 1
+        // this.uploadInformation = 'Try to upload...'
+        const formData = new FormData()
+        const uploadfile = document.querySelector('#file-for-upload')
+        formData.append('file', uploadfile.files[0])
+        axios.post('http://localhost:3000/api/files/Upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
         console.log('Upload success')
       } catch (err) {
         console.log(err)
@@ -83,7 +112,21 @@ export default {
     },
     async downloadFile (fileName) {
       try {
-        axios.get(config.fileSystem.api.downloadFile + fileName)
+        const downloadRes = await axios.get('http://localhost:3000/api/files/Download/fileName=' + fileName, { responseType: 'blob' })
+        console.log(downloadRes)
+      } catch (err) {
+        console.log(err)
+      }
+    },
+    async deleteFile (fileName) {
+      try {
+        this.fileResult.forEach(item => {
+          if (item.includes(fileName)) {
+            const fileIndex = this.fileResult.indexOf(item)
+            axios.delete('http://localhost:3000/api/files/Delete/fileName=' + fileName)
+            this.fileResult.splice(fileIndex, 1)
+          }
+        })
       } catch (err) {
         console.log(err)
       }
@@ -153,11 +196,28 @@ button:hover {
   min-height: 400px;
 }
 
-table, th, td {
+table {
+  table-layout: fixed;
+  width: 100%;
+}
+th,
+td {
+  font-family: LiHei Pro Medium;
   border: 2px solid white;
   border-collapse: collapse;
+  background-color: rgb(236, 232, 232);
 }
-th, td {
-  background-color: #96D4D4;
+
+.col1 {
+  width: 50px;
+}
+.col2 {
+  width: 400px;
+}
+.col3 {
+  width: 250px;
+}
+.col4, .col5 {
+  width: 150px;
 }
 </style>
