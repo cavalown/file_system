@@ -21,7 +21,7 @@ const config = {
             level: process.env.LOG_LEVEL
         },
         storage: {
-            filespace: '../public',
+            filespace: '../../public',
             recordpath: '../config/files_record.txt'
         }
     }

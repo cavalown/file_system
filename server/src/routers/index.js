@@ -6,6 +6,7 @@ import fse from "fs-extra"
 import path from "path"
 import config from "../config/index.js"
 import fileSend from "koa-send"
+import cors from '@koa/cors'
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
@@ -41,8 +42,12 @@ router.get("/", async (ctx) => {
 router.get("/files", async (ctx) => {
   try {
     let fileAll = await fse.readFile(recordFile, "utf-8");
-    console.log("All Files:", fileAll);
-    ctx.body = fileAll;
+    let fileResult = []
+    fileAll.split('\n').forEach(item=>{
+      fileResult.push(item.split('||').slice(1,2).join())
+    })
+    console.log("All Files:", fileResult);
+    ctx.body = fileResult;
   } catch (err) {
     console.log(err);
   }
@@ -54,7 +59,8 @@ router.post("/files/Upload", async (ctx) => {
   const newFileName = fileInfo.path.split("/").slice(-1).join();
   const oriFileName = fileInfo.name;
   const FileMime = fileInfo.type;
-  const FileTimestamp = fileInfo.lastModifiedDate;
+  // const FileTimestamp = fileInfo.lastModifiedDate;
+  const FileTimestamp = new Date().toISOString();
   const fileInfoRecord = `${newFileName}||${oriFileName}||${FileMime}||${FileTimestamp}`;
   console.log(fileInfoRecord);
   // write to record
@@ -87,7 +93,7 @@ router.delete("/files/Delete/fileName=:fileName", async (ctx) => {
         fse.remove(path.resolve(dirPath, newFileName));
         console.log(`File: ${fileName} deleted!`);
         ctx.body = `File: ${fileName} deleted!`;
-        data.splice(index);
+        data.splice(index, 1);
         console.log(data);
       }
     })
@@ -107,10 +113,13 @@ router.get("/files/Download/fileName=:fileName", async (ctx) => {
       if (item.split('||').slice(1,2).join() === fileName) {
         const newFileName = item.split("||").slice(0, 1).join();
         const filePath = path.resolve(dirPath, newFileName);
-        console.log("filePath:", filePath);
         if (fse.existsSync(filePath)) {
-          ctx.attachment(filePath);
-          fileSend(ctx, newFileName, {root:dirPath});
+          console.log("filePath:", filePath);
+          ctx.body = fse.createReadStream(filePath);
+          ctx.attachment(fileName);
+          // fileSend(ctx, newFileName, {root:dirPath});
+          // console.log('ppp', ctx.path)
+          fileSend(ctx, newFileName, {root: dirPath});
           console.log('Download file done.');
         } else {
           ctx.throw(400, "File not found");
@@ -130,7 +139,7 @@ router.get("/files/Search/fileKeyword=:fileKeyword", async (ctx) => {
   try {
     fileInfoRecords.forEach((item) => {
       if (item.includes(fileKeyword)) {
-        fileResult.push(item.split("||").slice(1, 2).join());
+        fileResult.push(item);
       }
     });
     console.log(fileResult);
@@ -141,6 +150,10 @@ router.get("/files/Search/fileKeyword=:fileKeyword", async (ctx) => {
 });
 
 
-app.use(router.routes()).use(router.allowedMethods()).listen(3000);
+app
+.use(cors())
+.use(router.routes())
+.use(router.allowedMethods())
+.listen(3000);
 
 export default router;
