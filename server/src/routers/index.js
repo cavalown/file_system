@@ -138,7 +138,7 @@ router.get("/files/Search/fileKeyword=:fileKeyword", async (ctx) => {
   let fileResult = [];
   try {
     fileInfoRecords.forEach((item) => {
-      if (item.includes(fileKeyword)) {
+      if (item.split('||').slice(1,2).join().includes(fileKeyword)) {
         fileResult.push(item);
       }
     });
@@ -155,5 +155,6 @@ app
 .use(router.routes())
 .use(router.allowedMethods())
 .listen(3000);
+console.log('Run!')
 
 export default router;
