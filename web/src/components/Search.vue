@@ -1,9 +1,9 @@
 <template>
   <div class="search">
     <form action="" class="search-file">
-      <input
+      <input  autofocus
         v-model.trim="fileKeyword"
-        type="text"
+        type="search"
         class="keyword"
         placeholder="請輸入檔案關鍵字"
       />
@@ -11,21 +11,15 @@
     </form>
     <form class="upload-file">
       <div class="upload-group">
-        <label for="file-upload" class="file-for-upload"
-          >上傳檔案
-          <input type="file" class="file-for-upload" id="file-upload" />
-        </label>
+        <label class="file-for-upload">選擇上傳檔案</label>
+        <input type="file" class="file-upload" id="file-upload" name="file"/>
       </div>
       <button @click="uploadFile" class="btn-upload-file">上傳</button>
     </form>
   </div>
   <hr />
   <div class="information">
-    <div class="forUpload">
-      {{ uploadInformation }}
-    </div>
     <div class="forSearch" :disabled="isSearch">
-      {{ fileResult }}
       <thead :disabled="isSearch">
         <tr>
           <th scope="col" class="col1">#</th>
@@ -65,7 +59,7 @@
 </template>
 <script>
 import axios from 'axios'
-// import config from '../router/config.js'
+// import config from '../configs/index.js'
 axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*'
 
 export default {
@@ -75,14 +69,18 @@ export default {
       fileKeyword: '',
       fileResult: [],
       fileName: [],
-      isSearch: 0,
-      fileInformation: ''
+      isSearch: 0
+      // fileInformation: ''
     }
   },
   methods: {
     async searchFile () {
       try {
         this.isSearch = 1
+        // const searchRes = await axios.get(
+        //   config.fileSystem.api.searchFile +
+        //     this.fileKeyword
+        // )
         const searchRes = await axios.get(
           'http://localhost:3000/api/files/Search/fileKeyword=' +
             this.fileKeyword
@@ -96,23 +94,40 @@ export default {
     async uploadFile () {
       try {
         this.isUpload = 1
-        // this.uploadInformation = 'Try to upload...'
         const formData = new FormData()
-        const uploadfile = document.querySelector('#file-for-upload')
+        const uploadfile = document.querySelector('#file-upload')
         formData.append('file', uploadfile.files[0])
-        axios.post('http://localhost:3000/api/files/Upload', formData, {
+        // const uploadRes = await axios.post(config.fileSystem.api.uploadFile, formData, {
+        //   headers: {
+        //     'Content-Type': 'multipart/form-data'
+        //   }
+        // })
+        const uploadRes = await axios.post('http://localhost:3000/api/files/Upload', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         })
+        console.log(uploadRes)
+        if (uploadRes.status >= 200 && uploadRes.status < 300) {
+          alert('上傳成功！')
+        } else {
+          alert('上傳失敗！')
+        }
         console.log('Upload success')
       } catch (err) {
+        alert('上傳失敗！')
         console.log(err)
       }
     },
     async downloadFile (fileName) {
       try {
+        // const downloadRes = await axios.get(config.fileSystem.api.downloadFile + fileName, { responseType: 'blob' })
         const downloadRes = await axios.get('http://localhost:3000/api/files/Download/fileName=' + fileName, { responseType: 'blob' })
+        const downloadUrl = window.URL.createObjectURL(new Blob([downloadRes.data]))
+        const downloadDom = document.createElement('a')
+        downloadDom.href = downloadUrl
+        downloadDom.setAttribute('download', fileName)
+        downloadDom.click()
         console.log(downloadRes)
       } catch (err) {
         console.log(err)
@@ -123,6 +138,7 @@ export default {
         this.fileResult.forEach(item => {
           if (item.includes(fileName)) {
             const fileIndex = this.fileResult.indexOf(item)
+            // axios.delete(config.fileSystem.api.deleteFile + fileName)
             axios.delete('http://localhost:3000/api/files/Delete/fileName=' + fileName)
             this.fileResult.splice(fileIndex, 1)
           }
@@ -164,18 +180,21 @@ button {
 
 .upload-group {
   width: 500px;
-  padding-bottom: 5px;
+  padding-bottom: 10px;
   text-align: left;
-  padding-left: 210px;
+  margin-left: 170px;
 }
 .file-for-upload {
   font-size: 18px;
   color: rgb(7, 54, 7);
   font-family: LiHei Pro Medium;
 }
+.file-upload {
+  margin-left: 10px;
+  font-family:Verdana, Geneva, Tahoma, sans-serif;
+}
 .upload-file {
   margin: 0 auto;
-  width: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -1,4 +1,7 @@
 'use strict'
+import dotenv from 'dotenv'
+
+dotenv.config('.env')
 
 const config = {
   fileSystem: {
@@ -20,6 +23,6 @@ const config = {
   }
 }
 
-console.log(config)
+console.log(process.env.API_HOST, process.env.API_PORT)
 
 export default config
