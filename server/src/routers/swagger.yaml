@@ -1,0 +1,135 @@
+---
+swagger: "2.0"
+info:
+  description: "This is a server File-System server."
+  version: "1.0.0"
+  title: "Swagger File System"
+host: "localhost:3000"
+basePath: "/api"
+tags:
+- name: "server"
+  description: "Check Server"
+- name: "file"
+  description: "Control Files"
+schemes:
+# - "https"
+- "http"
+paths:
+  /:
+    get:
+      tags:
+      - "server"
+      summary: "Service status"
+      description: "Check Server's service with server on"
+      operationId: "serverStatus"
+      produces:
+      - "application/xml"
+      - "application/json"
+      responses:
+        "200":
+          description: "Server's Service On"
+        "400":
+          description: "Server's Service Off"
+  /files:
+    get:
+      tags:
+      - "file"
+      summary: "List all files"
+      description: "List all files"
+      operationId: "findAllFiles"
+      produces:
+      - "application/xml"
+      - "application/json"
+      responses:
+        "200":
+          description: "Get All Files Success"
+        "404":
+          description: "Files Not Found"
+  /files/Search/fileKeyword={fileKeyword}:
+    get:
+      tags:
+      - "file"
+      summary: "Search file by keyword"
+      description: "Return all files with the keyword"
+      operationId: "getFileByKeyword"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - name: "fileKeyword"
+        in: "path"
+        description: "Return files' name"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+        "400":
+          description: "Invalid Keyword supplied"
+        "404":
+          description: "Files not found"
+  /files/Upload:
+    post:
+      tags:
+      - "file"
+      summary: "Uploads a file"
+      description: "Upload file"
+      operationId: "uploadFile"
+      consumes:
+      - "multipart/form-data"
+      parameters:
+        - in: formData
+          name: "file"
+          type: "file"
+          description: "file to upload"
+      responses:
+        "200":
+          description: "Upload File success"
+        "400":
+          description: "Upload File failed"
+  /files/Delete/fileName={fileName}:
+    delete:
+      tags:
+      - "file"
+      summary: "Delete file by fileName"
+      description: "Delete file by fileName"
+      operationId: "deleteFile"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - name: "fileName"
+        in: "path"
+        description: "file delete by fileName"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "Delete File Success"
+        "400":
+          description: "Invalid File Name supplied"
+        "404":
+          description: "File not found"
+  /files/Download/fileName={fileName}:
+    get:
+      tags:
+      - "file"
+      summary: "Download file by fileName"
+      description: "Download file by fileName"
+      operationId: "downloadFile"
+      produces:
+      - "application/xml"
+      - "application/json"
+      parameters:
+      - name: "fileName"
+        in: "path"
+        description: "download file by fileName"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "Download File Success"
+        "400":
+          description: "Invalid File Name supplied"
+        "404":
+          description: "File not found"

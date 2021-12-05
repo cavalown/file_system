@@ -1,19 +1,22 @@
 "use strict"
-import Koa from "koa"
-import Router from "koa-router"
-import KoaBody from "koa-body"
-import fse from "fs-extra"
-import path from "path"
-import config from "../config/index.js"
-import fileSend from "koa-send"
 import cors from '@koa/cors'
+import fse from "fs-extra"
+import Koa from "koa"
+import KoaBody from "koa-body"
+import Router from "koa-router"
+import fileSend from "koa-send"
+import koaSwagger from 'koa2-swagger-ui'
+import path from "path"
+import yamljs from 'yamljs'
+import config from "../config/index.js"
+
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const spec = yamljs.load(path.resolve(__dirname, 'swagger.yaml'));
 
 const app = new Koa();
 const router = new Router({ prefix: "/api" });
-
-app.use(KoaBody());
+router.get('/docs', koaSwagger.koaSwagger({ routePrefix: false, swaggerOptions: { spec } }));
 
 const dirPath = path.resolve(__dirname, config.koaApi.storage.filespace);
 const recordFile = path.resolve(__dirname, config.koaApi.storage.recordpath);
@@ -74,7 +77,7 @@ router.post("/files/Upload", async (ctx) => {
     await fse.outputFile(recordFile, data, {
       flags: "a+",
     });
-    ctx.body = fileInfoRecord;
+    ctx.body = {'Content': fileInfoRecord.split('||').slice(1,2).join()+" Uploaded Success"};
   } catch (err) {
     console.log(err);
   }
@@ -88,11 +91,11 @@ router.delete("/files/Delete/fileName=:fileName", async (ctx) => {
   let data = fileInfoRecords;
   try{
     fileInfoRecords.map((item, index, data)=>{
-      if (item.includes(fileName)){
+      if (item.includes(fileName)) {
         const newFileName = item.split("||").slice(0, 1).join();
         fse.remove(path.resolve(dirPath, newFileName));
         console.log(`File: ${fileName} deleted!`);
-        ctx.body = `File: ${fileName} deleted!`;
+        ctx.body = {'Content': fileName+' Deleted Success'};
         data.splice(index, 1);
         console.log(data);
       }
@@ -138,7 +141,8 @@ router.get("/files/Search/fileKeyword=:fileKeyword", async (ctx) => {
   let fileResult = [];
   try {
     fileInfoRecords.forEach((item) => {
-      if (item.split('||').slice(1,2).join().includes(fileKeyword)) {
+      const fileName = item.split('||').slice(1, 2).join();
+      if (fileName.includes(fileKeyword)) {
         fileResult.push(item);
       }
     });
