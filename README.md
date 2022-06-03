@@ -23,6 +23,5 @@ Api功能：
 ---
 
 ## 預計加入的內容
-- 使用vuex 整理api
 - Jest 測試
 - babel 打包
